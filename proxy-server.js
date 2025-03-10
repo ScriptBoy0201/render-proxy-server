@@ -1,41 +1,48 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
-
+const express = require('express');
+const fetch = require('node-fetch');
 const app = express();
-const PORT = process.env.PORT || 10000;
+const port = process.env.PORT || 3000;
 
-app.use(cors());
+// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Translation function using a free translation API (like Google Translate Web API)
-async function translateText(text) {
-    const apiUrl = "https://api.mymemory.translated.net/get";
-    const targetLang = "de"; // German
+// Proxy endpoint to forward requests to LibreTranslate API
+app.post('/translate', async (req, res) => {
+    const { text, source, target } = req.body;
+
+    if (!text || !source || !target) {
+        return res.status(400).json({ error: 'Missing required fields: text, source, or target.' });
+    }
+
+    const apiUrl = "https://libretranslate.com/translate";
 
     try {
-        const response = await fetch(`${apiUrl}?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`);
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                q: text,
+                source: source,
+                target: target,
+                format: "text",
+            }),
+        });
+
         const data = await response.json();
-        if (data.responseData) {
-            return data.responseData.translatedText;
+        if (data.translatedText) {
+            res.json({ translation: data.translatedText });
         } else {
-            throw new Error("Translation error");
+            res.status(500).json({ error: 'Translation failed.' });
         }
     } catch (error) {
-        console.error("Translation API Error:", error);
-        return "Error in translation.";
+        console.error("Error with translation:", error);
+        res.status(500).json({ error: 'Internal server error.' });
     }
-}
-
-app.get("/translate", async (req, res) => {
-    const { text } = req.query;
-    if (!text) {
-        return res.status(400).json({ error: "Text not provided" });
-    }
-
-    const translatedText = await translateText(text);
-    return res.json({ translation: translatedText });
 });
 
-app.listen(PORT, () => {
-    console.log(`Ser
+// Start the server
+app.listen(port, () => {
+    console.log(`Proxy server running on http://localhost:${port}`);
+});
