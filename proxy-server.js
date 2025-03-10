@@ -8,30 +8,34 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(express.json());
 
-// Proxy Endpoint for English Homework
-app.get("/homework", async (req, res) => {
-    const homeworkTopic = req.query.topic;
-    if (!homeworkTopic) {
-        return res.status(400).json({ error: "No homework topic provided" });
-    }
+// Translation function using a free translation API (like Google Translate Web API)
+async function translateText(text) {
+    const apiUrl = "https://api.mymemory.translated.net/get";
+    const targetLang = "de"; // German
 
     try {
-        // Replace this URL with an actual English homework API URL if available
-        const apiUrl = `https://api.some-english-homework.com/assignments?topic=${homeworkTopic}`;
-        const response = await fetch(apiUrl);
+        const response = await fetch(`${apiUrl}?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`);
         const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(`API Error: ${JSON.stringify(data)}`);
+        if (data.responseData) {
+            return data.responseData.translatedText;
+        } else {
+            throw new Error("Translation error");
         }
-
-        res.json(data); // Send the homework data to the client
     } catch (error) {
-        console.error("Homework API Error:", error);
-        res.status(500).json({ error: "Failed to fetch homework information" });
+        console.error("Translation API Error:", error);
+        return "Error in translation.";
     }
+}
+
+app.get("/translate", async (req, res) => {
+    const { text } = req.query;
+    if (!text) {
+        return res.status(400).json({ error: "Text not provided" });
+    }
+
+    const translatedText = await translateText(text);
+    return res.json({ translation: translatedText });
 });
 
 app.listen(PORT, () => {
-    console.log(`Proxy server running on port ${PORT}`);
-});
+    console.log(`Ser
