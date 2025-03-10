@@ -1,19 +1,13 @@
 {
-  "name": "english-homework-proxy",
+  "name": "libre-translate-proxy",
   "version": "1.0.0",
-  "description": "A proxy server for English homework API",
-  "main": "proxy-server.js",
+  "description": "Proxy server for LibreTranslate API",
+  "main": "server.js",
   "scripts": {
-    "start": "node proxy-server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.17.1",
-    "node-fetch": "^2.6.7",
-    "cors": "^2.8.5"
-  },
-  "engines": {
-    "node": "14.x"
-  },
-  "author": "Will",
-  "license": "ISC"
+    "node-fetch": "^2.6.1"
+  }
 }
